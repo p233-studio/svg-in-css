@@ -10,11 +10,34 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^4.8.2",
-    "vite": "^3.0.9",
-    "vite-plugin-solid": "^2.3.0"
+    "@p233/stylelint-config-scss": "^3.2.1",
+    "@typescript-eslint/parser": "^5.44.0",
+    "eslint": "^8.28.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-solid": "^0.8.0",
+    "husky": "^8.0.2",
+    "lint-staged": "^13.0.3",
+    "postcss": "^8.4.19",
+    "prettier": "^2.8.0",
+    "sass": "^1.56.1",
+    "stylelint": "^14.15.0",
+    "typescript": "4.9.3",
+    "vite": "3.2.4",
+    "vite-plugin-solid": "2.4.0"
   },
   "dependencies": {
-    "solid-js": "^1.5.1"
+    "solid-js": "1.6.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0"
+    ],
+    "!(package*).json": [
+      "prettier --write"
+    ],
+    "*.scss": [
+      "prettier --write",
+      "stylelint --fix"
+    ]
   }
 }
