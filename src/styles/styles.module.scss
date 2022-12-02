@@ -1,0 +1,54 @@
+.page {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.main {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+}
+
+.container {
+  max-width: 800px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.sidebar {
+  flex: none;
+  width: 320px;
+  height: 100%;
+  border-left: 1px solid #d2d2d2;
+}
+
+.code {
+  padding: 1rem;
+  font-size: 16px;
+  hyphens: none;
+  line-height: 20px;
+  word-wrap: break-word;
+  tab-size: 4;
+  white-space: pre-wrap;
+  background: #fcfcfc;
+}
+
+:global {
+  .selector,
+  .punctuation {
+    color: #007abd;
+  }
+
+  .property {
+    color: #cd3571;
+  }
+
+  .function {
+    color: #ab4ab8;
+  }
+
+  .string {
+    color: #006f3c;
+  }
+}
