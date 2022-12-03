@@ -1,4 +1,5 @@
 import { createSignal, createMemo, Show, For } from "solid-js";
+import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
 import { generateCSS, generateSassVariables } from "~/utils/generateCode";
@@ -14,14 +15,28 @@ const scssGrammar = Prism.languages.extend("css", {
   }
 });
 
+const getSVGOConfig = (prefix: string) => {
+  return {
+    plugins: [
+      "preset-default",
+      "removeDimensions",
+      {
+        name: "prefixIds",
+        params: { prefix }
+      }
+    ]
+  };
+};
+
 const App: Component = () => {
   const { appStore } = store;
   const [isOutputCSS, setIsOutputCSS] = createSignal(true);
+  const [enableSVGO, toggleSVGO] = createSignal(true);
 
   const code = createMemo(() => {
     return isOutputCSS()
-      ? generateCSS(appStore.prefix, appStore.list)
-      : generateSassVariables(appStore.prefix, appStore.list);
+      ? generateCSS(appStore.prefix, appStore.list, enableSVGO())
+      : generateSassVariables(appStore.prefix, appStore.list, enableSVGO());
   });
   const codeHTML = createMemo(() => {
     return Prism.highlight(code(), scssGrammar, "scss");
@@ -35,10 +50,12 @@ const App: Component = () => {
       const reader = new FileReader();
       reader.readAsText(i);
       reader.onload = (e: any) => {
+        const name = i.name.replace(/\.svg$/, "");
         appStore.addSVG({
+          name,
           filename: i.name,
-          name: i.name.replace(/\.svg$/, ""),
-          svg: e.target.result
+          originalSVG: e.target.result,
+          optimizedSVG: optimize(e.target.result, getSVGOConfig(name)).data
         });
       };
     });
@@ -56,7 +73,7 @@ const App: Component = () => {
   };
 
   const handleDownloadJSON = () => {
-    const text = JSON.stringify({ prefix: appStore.prefix, list: appStore.list }, null, 2);
+    const text = JSON.stringify({ configVersion: "1", prefix: appStore.prefix, list: appStore.list }, null, 2);
 
     const $link = document.createElement("a");
     $link.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
@@ -115,6 +132,10 @@ const App: Component = () => {
                   <input type="radio" name="format" checked={!isOutputCSS()} onChange={() => setIsOutputCSS(false)} />
                   <span>SCSS variable</span>
                 </label>
+                <label>
+                  <input type="checkbox" checked={enableSVGO()} onChange={() => toggleSVGO(!enableSVGO())} />
+                  <span>Enable SVGO</span>
+                </label>
                 <button onClick={handleCopyToClipboard}>Copy to clipboard</button>
               </div>
               <pre class={css.code} innerHTML={codeHTML()} />
@@ -141,7 +162,7 @@ const App: Component = () => {
           <For each={appStore.list}>
             {(i, idx) => (
               <div>
-                <img src={`data:image/svg+xml;utf8,${i.svg}`} />
+                <img src={`data:image/svg+xml;utf8,${enableSVGO() ? i.optimizedSVG : i.originalSVG}`} />
                 <span>{i.filename}</span>
                 <button onClick={() => appStore.removeSVG(idx())}>X</button>
               </div>

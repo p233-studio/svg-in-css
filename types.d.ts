@@ -1,7 +1,8 @@
 interface SVGEntry {
   name: string;
   filename: string;
-  svg: string;
+  originalSVG: string;
+  optimizedSVG: string;
 }
 
 interface Config {
