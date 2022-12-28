@@ -2,7 +2,7 @@ import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "so
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store, { OutputForm } from "~/store";
-import { generateCSS, generateSassVariables } from "~/utils/generateCode";
+import { generateCSSClasses, generateSassVariables } from "~/utils/generateCode";
 import css from "~/styles/styles.module.scss";
 import { version } from "../package.json";
 import type { Component } from "solid-js";
@@ -30,7 +30,7 @@ const getSVGOConfig = (filename: string) => {
 };
 
 const App: Component = () => {
-  const { appStore } = store;
+  const { appState, updateAppState } = store;
 
   const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
   let $menu: HTMLDivElement;
@@ -43,15 +43,15 @@ const App: Component = () => {
   });
 
   const code = createMemo(() => {
-    return appStore.outputForm === OutputForm.CSS
-      ? generateCSS(appStore.prefix, appStore.svgList, appStore.cssSettings, appStore.enableSVGO)
-      : generateSassVariables(appStore.prefix, appStore.svgList, appStore.enableSVGO);
+    return appState.outputForm === OutputForm.CSS
+      ? generateCSSClasses(appState.prefix, appState.svgList, appState.cssSettings, appState.enableSVGO)
+      : generateSassVariables(appState.prefix, appState.svgList, appState.enableSVGO);
   });
   const codeHTML = createMemo(() => {
     return Prism.highlight(code(), scssGrammar, "scss");
   });
   const hasSVGs = createMemo(() => {
-    return !!appStore.svgList.length;
+    return !!appState.svgList.length;
   });
 
   const handleUploadSVGs = (e: any) => {
@@ -60,7 +60,7 @@ const App: Component = () => {
       reader.readAsText(i);
       reader.onload = (e: any) => {
         const name = i.name.replace(/\.svg$/, "");
-        appStore.addSVG({
+        updateAppState.addSVG({
           name,
           filename: i.name,
           originalSVG: e.target.result,
@@ -70,26 +70,26 @@ const App: Component = () => {
     });
   };
 
-  const handleUploadJSON = (e: any) => {
+  const handleUploadConfigJSON = (e: any) => {
     if (!e.target.files.length) return;
 
     const reader = new FileReader();
     reader.readAsText(e.target.files[0]);
     reader.onload = (e: any) => {
       const config = JSON.parse(e.target.result);
-      appStore.resetConfig(config);
+      updateAppState.restoreConfig(config);
     };
   };
 
-  const handleDownloadJSON = () => {
+  const handleDownloadConfigJSON = () => {
     const text = JSON.stringify(
       {
         configVersion: "1",
-        outputForm: appStore.outputForm,
-        cssSettings: appStore.outputForm === OutputForm.CSS ? appStore.cssSettings : {},
-        enableSVGO: appStore.enableSVGO,
-        prefix: appStore.prefix,
-        svgList: appStore.svgList
+        outputForm: appState.outputForm,
+        cssSettings: appState.outputForm === OutputForm.CSS ? appState.cssSettings : {},
+        enableSVGO: appState.enableSVGO,
+        prefix: appState.prefix,
+        svgList: appState.svgList
       },
       null,
       2
@@ -105,10 +105,14 @@ const App: Component = () => {
     document.body.removeChild($link);
   };
 
+  const handleClearAll = () => {
+    if (confirm("Will delete all SVG data. Are you sure to continue?")) {
+      updateAppState.clearAll();
+    }
+  };
+
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(code()).catch((err) => {
-      console.log(err);
-    });
+    navigator.clipboard.writeText(code()).catch(console.error);
   };
 
   return (
@@ -123,12 +127,12 @@ const App: Component = () => {
               fallback={
                 <div class={css.mainUploadButtons}>
                   <label>
-                    <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
-                    <span>Upload SVGs</span>
+                    <input type="file" accept=".json" onChange={handleUploadConfigJSON} />
+                    <span>Upload config.json</span>
                   </label>
                   <label>
-                    <input type="file" accept=".json" onChange={handleUploadJSON} />
-                    <span>Upload Config JSON</span>
+                    <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
+                    <span>Upload SVGs</span>
                   </label>
                 </div>
               }
@@ -137,14 +141,14 @@ const App: Component = () => {
                 <label class={css.prefixInput}>
                   <input
                     type="text"
-                    value={appStore.prefix}
-                    onInput={(e: any) => appStore.updatePrefix(e.target.value)}
+                    value={appState.prefix}
+                    onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
                   />
                 </label>
 
                 <label class={css.formSelect}>
                   <button class={css.formSelect__trigger} onMouseDown={() => setIsDropdownOpen(true)}>
-                    {appStore.outputForm}
+                    {appState.outputForm}
                   </button>
                   <div
                     class={css.formSelect__menu}
@@ -152,32 +156,34 @@ const App: Component = () => {
                     ref={(el) => ($menu = el)}
                   >
                     <button
-                      classList={{ [css.active]: appStore.outputForm === OutputForm.CSS }}
-                      onClick={() => appStore.updateOutputForm(OutputForm.CSS)}
+                      classList={{ [css.active]: appState.outputForm === OutputForm.CSS }}
+                      onClick={() => updateAppState.updateOutputForm(OutputForm.CSS)}
                     >
-                      CSS
+                      {OutputForm.CSS}
                     </button>
-                    <Show when={appStore.outputForm === OutputForm.CSS}>
+                    <Show when={appState.outputForm === OutputForm.CSS}>
                       <button
-                        classList={{ [css.active]: appStore.cssSettings.outputBackgroundProperty }}
+                        classList={{ [css.active]: appState.cssSettings.outputBackgroundProperty }}
                         onClick={() =>
-                          appStore.updateOutputBackgroundProperty(!appStore.cssSettings.outputBackgroundProperty)
+                          updateAppState.updateOutputBackgroundProperty(!appState.cssSettings.outputBackgroundProperty)
                         }
                       >
                         Background Property
                       </button>
                       <button
-                        classList={{ [css.active]: appStore.cssSettings.outputWebkitPrefix }}
-                        onClick={() => appStore.updateOutputWebkitPrefix(!appStore.cssSettings.outputWebkitPrefix)}
+                        classList={{ [css.active]: appState.cssSettings.outputWebkitPrefix }}
+                        onClick={() =>
+                          updateAppState.updateOutputWebkitPrefix(!appState.cssSettings.outputWebkitPrefix)
+                        }
                       >
                         Webkit Prefix
                       </button>
                     </Show>
                     <button
-                      classList={{ [css.active]: appStore.outputForm === OutputForm.SCSS }}
-                      onClick={() => appStore.updateOutputForm(OutputForm.SCSS)}
+                      classList={{ [css.active]: appState.outputForm === OutputForm.SCSS }}
+                      onClick={() => updateAppState.updateOutputForm(OutputForm.SCSS)}
                     >
-                      SCSS Varibales
+                      {OutputForm.SCSS}
                     </button>
                   </div>
                 </label>
@@ -185,8 +191,8 @@ const App: Component = () => {
                 <label class={css.svgoButton}>
                   <input
                     type="checkbox"
-                    checked={appStore.enableSVGO}
-                    onChange={() => appStore.updateEnableSVGO(!appStore.enableSVGO)}
+                    checked={appState.enableSVGO}
+                    onChange={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
                   />
                   <span>Enable SVGO</span>
                 </label>
@@ -206,25 +212,21 @@ const App: Component = () => {
             <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
             <span>Upload SVGs</span>
           </label>
-          <label>
-            <input type="file" accept=".json" onChange={handleUploadJSON} />
-            <span>Upload Config JSON</span>
-          </label>
           <Show when={hasSVGs()}>
-            <button onClick={appStore.clearAll}>Clear all</button>
-            <button onClick={handleDownloadJSON}>Download config.json</button>
+            <button onClick={handleDownloadConfigJSON}>Download config.json</button>
+            <button onClick={handleClearAll}>Clear all</button>
           </Show>
         </div>
         <div class={css.sidebarList}>
-          <For each={appStore.svgList}>
+          <For each={appState.svgList}>
             {(i, idx) => (
               <div class={css.entry}>
                 <img
                   class={css.entry__image}
-                  src={`data:image/svg+xml;utf8,${appStore.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
+                  src={`data:image/svg+xml;utf8,${appState.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
                 />
                 <span class={css.entry__filename}>{i.filename}</span>
-                <button class={css.entry__remove} onClick={() => appStore.removeSVG(idx())} />
+                <button class={css.entry__remove} onClick={() => updateAppState.removeSVG(idx())} />
               </div>
             )}
           </For>

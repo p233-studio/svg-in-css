@@ -1,6 +1,6 @@
 import encodeSVG from "./encodeSVG";
 
-export function generateCSS(prefix: string, svgList: SVGEntry[], cssSettings: CSSSettings, enableSVGO: boolean) {
+export function generateCSSClasses(prefix: string, svgList: SVGEntry[], cssSettings: CSSSettings, enableSVGO: boolean) {
   return svgList
     .map((i) => {
       const svg = "data:image/svg+xml," + encodeSVG(enableSVGO ? i.optimizedSVG : i.originalSVG);
