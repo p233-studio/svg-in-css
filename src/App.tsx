@@ -215,6 +215,7 @@ const App: Component = () => {
           <Show when={hasSVGs()}>
             <button onClick={handleDownloadConfigJSON}>Download config.json</button>
             <button onClick={handleClearAll}>Clear all</button>
+            <button onClick={updateAppState.sortAlphabetically}>Sort alphabetically</button>
           </Show>
         </div>
         <div class={css.sidebarList}>

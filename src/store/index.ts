@@ -47,6 +47,9 @@ const updateAppState = {
   removeSVG: (index: number) => {
     setAppState(produce((s) => s.svgList.splice(index, 1)));
   },
+  sortAlphabetically: () => {
+    setAppState(produce((s) => (s.svgList = s.svgList.sort((a, b) => a.name.localeCompare(b.name)))));
+  },
   restoreConfig: (config: AppState) => {
     setAppState({
       outputForm: config.outputForm,
