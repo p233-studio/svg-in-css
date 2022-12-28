@@ -1,9 +1,10 @@
-import { createSignal, createMemo, Show, For } from "solid-js";
+import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "solid-js";
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
-import store from "~/store";
+import store, { OutputForm } from "~/store";
 import { generateCSS, generateSassVariables } from "~/utils/generateCode";
 import css from "~/styles/styles.module.scss";
+import { version } from "../package.json";
 import type { Component } from "solid-js";
 
 const scssGrammar = Prism.languages.extend("css", {
@@ -15,14 +16,14 @@ const scssGrammar = Prism.languages.extend("css", {
   }
 });
 
-const getSVGOConfig = (prefix: string) => {
+const getSVGOConfig = (filename: string) => {
   return {
     plugins: [
       "preset-default",
       "removeDimensions",
       {
         name: "prefixIds",
-        params: { prefix }
+        params: { prefix: filename }
       }
     ]
   };
@@ -30,19 +31,27 @@ const getSVGOConfig = (prefix: string) => {
 
 const App: Component = () => {
   const { appStore } = store;
-  const [isOutputCSS, setIsOutputCSS] = createSignal(true);
-  const [enableSVGO, toggleSVGO] = createSignal(true);
+
+  const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
+  let $menu: HTMLDivElement;
+  const handleOutsideClick = (e: any) => !$menu.contains(e.target) && setIsDropdownOpen(false);
+  createEffect(() => {
+    if (isDropdownOpen()) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      onCleanup(() => document.removeEventListener("mousedown", handleOutsideClick));
+    }
+  });
 
   const code = createMemo(() => {
-    return isOutputCSS()
-      ? generateCSS(appStore.prefix, appStore.list, enableSVGO())
-      : generateSassVariables(appStore.prefix, appStore.list, enableSVGO());
+    return appStore.outputForm === OutputForm.CSS
+      ? generateCSS(appStore.prefix, appStore.svgList, appStore.cssSettings, appStore.enableSVGO)
+      : generateSassVariables(appStore.prefix, appStore.svgList, appStore.enableSVGO);
   });
   const codeHTML = createMemo(() => {
     return Prism.highlight(code(), scssGrammar, "scss");
   });
   const hasSVGs = createMemo(() => {
-    return !!appStore.list.length;
+    return !!appStore.svgList.length;
   });
 
   const handleUploadSVGs = (e: any) => {
@@ -73,7 +82,18 @@ const App: Component = () => {
   };
 
   const handleDownloadJSON = () => {
-    const text = JSON.stringify({ configVersion: "1", prefix: appStore.prefix, list: appStore.list }, null, 2);
+    const text = JSON.stringify(
+      {
+        configVersion: "1",
+        outputForm: appStore.outputForm,
+        cssSettings: appStore.outputForm === OutputForm.CSS ? appStore.cssSettings : {},
+        enableSVGO: appStore.enableSVGO,
+        prefix: appStore.prefix,
+        svgList: appStore.svgList
+      },
+      null,
+      2
+    );
 
     const $link = document.createElement("a");
     $link.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
@@ -86,18 +106,13 @@ const App: Component = () => {
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard
-      .writeText(code())
-      .then(() => {
-        console.log("success");
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    navigator.clipboard.writeText(code()).catch((err) => {
+      console.log(err);
+    });
   };
 
   return (
-    <div class={css.page}>
+    <div class={css.page} classList={{ [css.hasSVGs]: hasSVGs() }}>
       <main class={css.main}>
         <div class={css.container}>
           <div class={css.hgroup}>
@@ -106,7 +121,7 @@ const App: Component = () => {
             <Show
               when={hasSVGs()}
               fallback={
-                <div>
+                <div class={css.mainUploadButtons}>
                   <label>
                     <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
                     <span>Upload SVGs</span>
@@ -118,33 +133,75 @@ const App: Component = () => {
                 </div>
               }
             >
-              <div>
-                <input
-                  type="text"
-                  value={appStore.prefix}
-                  onInput={(e: any) => appStore.updatePrefix(e.target.value)}
-                />
-                <label>
-                  <input type="radio" name="format" checked={isOutputCSS()} onChange={() => setIsOutputCSS(true)} />
-                  <span>CSS</span>
+              <div class={css.mainController}>
+                <label class={css.prefixInput}>
+                  <input
+                    type="text"
+                    value={appStore.prefix}
+                    onInput={(e: any) => appStore.updatePrefix(e.target.value)}
+                  />
                 </label>
-                <label>
-                  <input type="radio" name="format" checked={!isOutputCSS()} onChange={() => setIsOutputCSS(false)} />
-                  <span>SCSS variable</span>
+
+                <label class={css.formSelect}>
+                  <button class={css.formSelect__trigger} onMouseDown={() => setIsDropdownOpen(true)}>
+                    {appStore.outputForm}
+                  </button>
+                  <div
+                    class={css.formSelect__menu}
+                    classList={{ [css.show]: isDropdownOpen() }}
+                    ref={(el) => ($menu = el)}
+                  >
+                    <button
+                      classList={{ [css.active]: appStore.outputForm === OutputForm.CSS }}
+                      onClick={() => appStore.updateOutputForm(OutputForm.CSS)}
+                    >
+                      CSS
+                    </button>
+                    <Show when={appStore.outputForm === OutputForm.CSS}>
+                      <button
+                        classList={{ [css.active]: appStore.cssSettings.outputBackgroundProperty }}
+                        onClick={() =>
+                          appStore.updateOutputBackgroundProperty(!appStore.cssSettings.outputBackgroundProperty)
+                        }
+                      >
+                        Background Property
+                      </button>
+                      <button
+                        classList={{ [css.active]: appStore.cssSettings.outputWebkitPrefix }}
+                        onClick={() => appStore.updateOutputWebkitPrefix(!appStore.cssSettings.outputWebkitPrefix)}
+                      >
+                        Webkit Prefix
+                      </button>
+                    </Show>
+                    <button
+                      classList={{ [css.active]: appStore.outputForm === OutputForm.SCSS }}
+                      onClick={() => appStore.updateOutputForm(OutputForm.SCSS)}
+                    >
+                      SCSS Varibales
+                    </button>
+                  </div>
                 </label>
-                <label>
-                  <input type="checkbox" checked={enableSVGO()} onChange={() => toggleSVGO(!enableSVGO())} />
+
+                <label class={css.svgoButton}>
+                  <input
+                    type="checkbox"
+                    checked={appStore.enableSVGO}
+                    onChange={() => appStore.updateEnableSVGO(!appStore.enableSVGO)}
+                  />
                   <span>Enable SVGO</span>
                 </label>
-                <button onClick={handleCopyToClipboard}>Copy to clipboard</button>
+                <button onClick={handleCopyToClipboard} class={css.clipboardButton}>
+                  Copy to clipboard
+                </button>
               </div>
               <pre class={css.code} innerHTML={codeHTML()} />
             </Show>
           </div>
+          <footer class={css.footer}>Version: {version}</footer>
         </div>
       </main>
       <aside class={css.sidebar}>
-        <div>
+        <div class={css.sidebarButtons}>
           <label>
             <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
             <span>Upload SVGs</span>
@@ -158,13 +215,16 @@ const App: Component = () => {
             <button onClick={handleDownloadJSON}>Download config.json</button>
           </Show>
         </div>
-        <div>
-          <For each={appStore.list}>
+        <div class={css.sidebarList}>
+          <For each={appStore.svgList}>
             {(i, idx) => (
-              <div>
-                <img src={`data:image/svg+xml;utf8,${enableSVGO() ? i.optimizedSVG : i.originalSVG}`} />
-                <span>{i.filename}</span>
-                <button onClick={() => appStore.removeSVG(idx())}>X</button>
+              <div class={css.entry}>
+                <img
+                  class={css.entry__image}
+                  src={`data:image/svg+xml;utf8,${appStore.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
+                />
+                <span class={css.entry__filename}>{i.filename}</span>
+                <button class={css.entry__remove} onClick={() => appStore.removeSVG(idx())} />
               </div>
             )}
           </For>

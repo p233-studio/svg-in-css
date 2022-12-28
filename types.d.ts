@@ -1,3 +1,5 @@
+declare module "svgo/dist/svgo.browser.js";
+
 interface SVGEntry {
   name: string;
   filename: string;
@@ -5,7 +7,7 @@ interface SVGEntry {
   optimizedSVG: string;
 }
 
-interface Config {
-  prefix: string;
-  list: SVGEntry[];
+interface CSSSettings {
+  outputBackgroundProperty?: boolean;
+  outputWebkitPrefix?: boolean;
 }
