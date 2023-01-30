@@ -14,7 +14,7 @@ export function generateSassVariables(prefix: string, svgList: SVGEntry[], enabl
   return svgList
     .map((i) => {
       const svg = "data:image/svg+xml," + encodeSVG(enableSVGO ? i.optimizedSVG : i.originalSVG);
-      return `$${prefix}${i.name}: "data:image/svg+xml,${svg}";`;
+      return `$${prefix}${i.name}: "${svg}";`;
     })
     .join("\n\n");
 }
