@@ -1,9 +1,5 @@
 {
-  "extends": [
-    "@p233/stylelint-config-scss",
-    "@p233/stylelint-config-scss/css-modules",
-    "@p233/stylelint-config-scss/order-bootstrap"
-  ],
+  "extends": ["@p233/stylelint-config-scss", "@p233/stylelint-config-scss/css-modules"],
   "rules": {
     "property-no-vendor-prefix": null,
     "no-descending-specificity": null
