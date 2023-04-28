@@ -1,45 +1,28 @@
 import { produce } from "solid-js/store";
 import createLocalStore from "./createLocalStore";
 
-export enum OutputForm {
-  CSS = "CSS Class",
-  SCSS = "SCSS Variable"
-}
-
-type AppState = {
-  outputForm: OutputForm;
-  cssSettings: CSSSettings;
-  enableSVGO: boolean;
-  prefix: string;
-  svgList: SVGEntry[];
+const defaultState = {
+  prefix: "icon-",
+  enableSVGO: true,
+  outputBackground: true,
+  outputWebkitPrefix: false,
+  svgList: [] as SVGEntry[]
 };
 
-const [appState, setAppState] = createLocalStore<AppState>({
-  outputForm: OutputForm.CSS,
-  cssSettings: {
-    outputBackgroundProperty: true,
-    outputWebkitPrefix: false
-  },
-  enableSVGO: true,
-  prefix: "icon-",
-  svgList: [] as SVGEntry[]
-});
+const [appState, setAppState] = createLocalStore<AppState>(defaultState);
 
 const updateAppState = {
-  updateOutputForm: (form: OutputForm) => {
-    setAppState(produce((s) => (s.outputForm = form)));
-  },
-  updateOutputBackgroundProperty: (isEnable: boolean) => {
-    setAppState(produce((s) => (s.cssSettings.outputBackgroundProperty = isEnable)));
-  },
-  updateOutputWebkitPrefix: (isEnable: boolean) => {
-    setAppState(produce((s) => (s.cssSettings.outputWebkitPrefix = isEnable)));
+  updatePrefix: (prefix: string) => {
+    setAppState(produce((s) => (s.prefix = prefix)));
   },
   updateEnableSVGO: (isEnable: boolean) => {
     setAppState(produce((s) => (s.enableSVGO = isEnable)));
   },
-  updatePrefix: (prefix: string) => {
-    setAppState(produce((s) => (s.prefix = prefix)));
+  updateOutputBackground: (isEnable: boolean) => {
+    setAppState(produce((s) => (s.outputBackground = isEnable)));
+  },
+  updateOutputWebkitPrefix: (isEnable: boolean) => {
+    setAppState(produce((s) => (s.outputWebkitPrefix = isEnable)));
   },
   addSVG: (entry: SVGEntry) => {
     setAppState(produce((s) => s.svgList.push(entry)));
@@ -47,28 +30,19 @@ const updateAppState = {
   removeSVG: (index: number) => {
     setAppState(produce((s) => s.svgList.splice(index, 1)));
   },
+  removeAll: () => {
+    setAppState(produce((s) => (s.svgList = [])));
+  },
   sortAlphabetically: () => {
     setAppState(produce((s) => (s.svgList = s.svgList.sort((a, b) => a.name.localeCompare(b.name)))));
   },
   restoreConfig: (config: AppState) => {
     setAppState({
-      outputForm: config.outputForm,
-      cssSettings: config.cssSettings,
-      enableSVGO: config.enableSVGO,
       prefix: config.prefix,
+      enableSVGO: config.enableSVGO,
+      outputBackground: config.outputBackground,
+      outputWebkitPrefix: config.outputWebkitPrefix,
       svgList: config.svgList
-    });
-  },
-  clearAll: () => {
-    setAppState({
-      outputForm: OutputForm.CSS,
-      cssSettings: {
-        outputBackgroundProperty: true,
-        outputWebkitPrefix: false
-      },
-      enableSVGO: true,
-      prefix: "icon-",
-      svgList: [] as SVGEntry[]
     });
   }
 };

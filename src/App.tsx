@@ -1,33 +1,32 @@
 import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "solid-js";
 import { optimize } from "svgo/dist/svgo.browser.js";
+import clsx from "clsx";
 import Prism from "prismjs";
-import store, { OutputForm } from "~/store";
-import { generateCSSClasses, generateSassVariables } from "~/utils/generateCode";
+import store from "~/store";
+import generateCodeSnippet from "~/utils/generateCodeSnippet";
 import css from "~/styles/styles.module.scss";
 import { version } from "../package.json";
 import type { Component } from "solid-js";
 
-const scssGrammar = Prism.languages.extend("css", {
-  property: {
-    pattern: /(?:[-\w]|\$[-\w]|#\{\$[-\w]+\})+(?=\s*:)/,
-    inside: {
-      variable: /\$[-\w]+|#\{\$[-\w]+\}/
-    }
-  }
-});
-
-const getSVGOConfig = (filename: string) => {
+const getSVGOConfig = (prefix: string) => {
   return {
     plugins: [
       "preset-default",
       "removeDimensions",
       {
         name: "prefixIds",
-        params: { prefix: filename }
+        params: { prefix }
       }
     ]
   };
 };
+
+const Toggle = (props: { isActive: boolean; onClick: () => void }) => (
+  <button class={css.toggle} classList={{ [css.active]: props.isActive }} onClick={() => props.onClick()}>
+    <span>On</span>
+    <span>Off</span>
+  </button>
+);
 
 const App: Component = () => {
   const { appState, updateAppState } = store;
@@ -43,12 +42,10 @@ const App: Component = () => {
   });
 
   const code = createMemo(() => {
-    return appState.outputForm === OutputForm.CSS
-      ? generateCSSClasses(appState.prefix, appState.svgList, appState.cssSettings, appState.enableSVGO)
-      : generateSassVariables(appState.prefix, appState.svgList, appState.enableSVGO);
+    return generateCodeSnippet(appState);
   });
   const codeHTML = createMemo(() => {
-    return Prism.highlight(code(), scssGrammar, "scss");
+    return Prism.highlight(code(), Prism.languages["css"], "css");
   });
   const hasSVGs = createMemo(() => {
     return !!appState.svgList.length;
@@ -62,7 +59,6 @@ const App: Component = () => {
         const name = i.name.replace(/\.svg$/, "");
         updateAppState.addSVG({
           name,
-          filename: i.name,
           originalSVG: e.target.result,
           optimizedSVG: optimize(e.target.result, getSVGOConfig(name)).data
         });
@@ -84,11 +80,10 @@ const App: Component = () => {
   const handleDownloadConfigJSON = () => {
     const text = JSON.stringify(
       {
-        configVersion: "1",
-        outputForm: appState.outputForm,
-        cssSettings: appState.outputForm === OutputForm.CSS ? appState.cssSettings : {},
-        enableSVGO: appState.enableSVGO,
         prefix: appState.prefix,
+        enableSVGO: appState.enableSVGO,
+        outputBackground: appState.outputBackground,
+        outputWebkitPrefix: appState.outputWebkitPrefix,
         svgList: appState.svgList
       },
       null,
@@ -105,9 +100,9 @@ const App: Component = () => {
     document.body.removeChild($link);
   };
 
-  const handleClearAll = () => {
-    if (confirm("Will delete all SVG data. Are you sure to continue?")) {
-      updateAppState.clearAll();
+  const handleRemoveAll = () => {
+    if (confirm("Will remove all SVGs. Are you sure to continue?")) {
+      updateAppState.removeAll();
     }
   };
 
@@ -118,107 +113,101 @@ const App: Component = () => {
   return (
     <div class={css.page} classList={{ [css.hasSVGs]: hasSVGs() }}>
       <main class={css.main}>
-        <div class={css.container}>
-          <div class={css.hgroup}>
+        <div class={css.main__container}>
+          <div class={css.main__hgroup}>
             <h1>SVG in CSS</h1>
             <p>URL encoding SVGs</p>
             <Show
               when={hasSVGs()}
               fallback={
-                <div class={css.mainUploadButtons}>
-                  <label>
+                <div class={css.main__buttonGroup}>
+                  <label class={css.button}>
                     <input type="file" accept=".json" onChange={handleUploadConfigJSON} />
                     <span>Upload config.json</span>
                   </label>
-                  <label>
+                  <label class={css.button}>
                     <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
                     <span>Upload SVGs</span>
                   </label>
                 </div>
               }
             >
-              <div class={css.mainController}>
-                <label class={css.prefixInput}>
-                  <input
-                    type="text"
-                    value={appState.prefix}
-                    onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
-                  />
-                </label>
-
-                <label class={css.formSelect}>
-                  <button class={css.formSelect__trigger} onMouseDown={() => setIsDropdownOpen(true)}>
-                    {appState.outputForm}
+              <div class={css.main__buttonGroup}>
+                <div class={css.settings}>
+                  <button
+                    class={clsx(css.button, css.settings__trigger)}
+                    classList={{ [css.show]: isDropdownOpen() }}
+                    onMouseDown={() => setIsDropdownOpen(true)}
+                  >
+                    Settings
                   </button>
                   <div
-                    class={css.formSelect__menu}
+                    class={css.settings__menu}
                     classList={{ [css.show]: isDropdownOpen() }}
                     ref={(el) => ($menu = el)}
                   >
-                    <button
-                      classList={{ [css.active]: appState.outputForm === OutputForm.CSS }}
-                      onClick={() => updateAppState.updateOutputForm(OutputForm.CSS)}
-                    >
-                      {OutputForm.CSS}
-                    </button>
-                    <Show when={appState.outputForm === OutputForm.CSS}>
-                      <button
-                        classList={{ [css.active]: appState.cssSettings.outputBackgroundProperty }}
-                        onClick={() =>
-                          updateAppState.updateOutputBackgroundProperty(!appState.cssSettings.outputBackgroundProperty)
-                        }
-                      >
-                        Background Property
-                      </button>
-                      <button
-                        classList={{ [css.active]: appState.cssSettings.outputWebkitPrefix }}
-                        onClick={() =>
-                          updateAppState.updateOutputWebkitPrefix(!appState.cssSettings.outputWebkitPrefix)
-                        }
-                      >
-                        Webkit Prefix
-                      </button>
-                    </Show>
-                    <button
-                      classList={{ [css.active]: appState.outputForm === OutputForm.SCSS }}
-                      onClick={() => updateAppState.updateOutputForm(OutputForm.SCSS)}
-                    >
-                      {OutputForm.SCSS}
-                    </button>
+                    <dl class={css.settings__options}>
+                      <dt>Prefix</dt>
+                      <dd>
+                        <input
+                          type="text"
+                          value={appState.prefix}
+                          onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
+                          class={css.prefixInput}
+                        />
+                      </dd>
+                      <dt>Enable SVGO</dt>
+                      <dd>
+                        <Toggle
+                          isActive={appState.enableSVGO}
+                          onClick={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
+                        />
+                      </dd>
+                      <dt>Inherit Color</dt>
+                      <dd>
+                        <Toggle
+                          isActive={appState.outputBackground}
+                          onClick={() => updateAppState.updateOutputBackground(!appState.outputBackground)}
+                        />
+                      </dd>
+                      <dt>Webkit Prefix</dt>
+                      <dd>
+                        <Toggle
+                          isActive={appState.outputWebkitPrefix}
+                          onClick={() => updateAppState.updateOutputWebkitPrefix(!appState.outputWebkitPrefix)}
+                        />
+                      </dd>
+                    </dl>
                   </div>
-                </label>
+                </div>
 
-                <label class={css.svgoButton}>
-                  <input
-                    type="checkbox"
-                    checked={appState.enableSVGO}
-                    onChange={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
-                  />
-                  <span>Enable SVGO</span>
-                </label>
-                <button onClick={handleCopyToClipboard} class={css.clipboardButton}>
-                  Copy to clipboard
+                <button class={clsx(css.button, css.copyButton)} onClick={handleCopyToClipboard}>
+                  Copy snippets
                 </button>
               </div>
               <pre class={css.code} innerHTML={codeHTML()} />
             </Show>
           </div>
-          <footer class={css.footer}>Version: {version}</footer>
+          <footer class={css.main__footer}>Version: {version}</footer>
         </div>
       </main>
       <aside class={css.sidebar}>
-        <div class={css.sidebarButtons}>
+        <div class={css.sidebar__buttonGroup}>
           <label>
             <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
-            <span>Upload SVGs</span>
+            <span class={css.button}>Upload more SVGs</span>
           </label>
-          <Show when={hasSVGs()}>
-            <button onClick={handleDownloadConfigJSON}>Download config.json</button>
-            <button onClick={handleClearAll}>Clear all</button>
-            <button onClick={updateAppState.sortAlphabetically}>Sort alphabetically</button>
-          </Show>
+          <button class={css.button} onClick={updateAppState.sortAlphabetically}>
+            Sort alphabetically
+          </button>
+          <button class={css.button} onClick={handleDownloadConfigJSON}>
+            Download config.json
+          </button>
+          <button class={css.button} onClick={handleRemoveAll}>
+            Remove all SVGs
+          </button>
         </div>
-        <div class={css.sidebarList}>
+        <div class={css.sidebar__svgList}>
           <For each={appState.svgList}>
             {(i, idx) => (
               <div class={css.entry}>
@@ -226,7 +215,7 @@ const App: Component = () => {
                   class={css.entry__image}
                   src={`data:image/svg+xml;utf8,${appState.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
                 />
-                <span class={css.entry__filename}>{i.filename}</span>
+                <span class={css.entry__filename}>{i.name}.svg</span>
                 <button class={css.entry__remove} onClick={() => updateAppState.removeSVG(idx())} />
               </div>
             )}

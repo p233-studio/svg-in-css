@@ -1,1 +1,1 @@
-((web-mode . ((emmet2-markup-variant . "solid"))))
+((tsx-ts-mode . ((emmet2-markup-variant . "solid"))))
