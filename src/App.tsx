@@ -78,7 +78,7 @@ const App: Component = () => {
   };
 
   const handleDownloadConfigJSON = () => {
-    const text = JSON.stringify(
+    const content = JSON.stringify(
       {
         prefix: appState.prefix,
         enableSVGO: appState.enableSVGO,
@@ -91,8 +91,21 @@ const App: Component = () => {
     );
 
     const $link = document.createElement("a");
-    $link.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(text));
+    $link.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(content));
     $link.setAttribute("download", "svg-in-css.config.json");
+    $link.style.display = "none";
+    document.body.appendChild($link);
+    $link.click();
+
+    document.body.removeChild($link);
+  };
+
+  const handleDownloadSVG = (idx: number) => {
+    const target = appState.svgList[idx];
+
+    const $link = document.createElement("a");
+    $link.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(target.originalSVG));
+    $link.setAttribute("download", `${target.name}.svg`);
     $link.style.display = "none";
     document.body.appendChild($link);
     $link.click();
@@ -242,6 +255,9 @@ const App: Component = () => {
                   </span>
                   .svg
                 </span>
+                <button class={css.entry__download} onClick={() => handleDownloadSVG(idx())}>
+                  d
+                </button>
                 <button class={css.entry__remove} onClick={() => updateAppState.removeSVG(idx())} />
               </div>
             )}
