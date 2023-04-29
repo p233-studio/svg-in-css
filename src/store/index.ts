@@ -30,6 +30,9 @@ const updateAppState = {
   removeSVG: (index: number) => {
     setAppState(produce((s) => s.svgList.splice(index, 1)));
   },
+  renameSVG: (index: number, name: string) => {
+    setAppState(produce((s) => (s.svgList[index].name = name)));
+  },
   removeAll: () => {
     setAppState(produce((s) => (s.svgList = [])));
   },

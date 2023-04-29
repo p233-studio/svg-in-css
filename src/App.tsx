@@ -110,6 +110,22 @@ const App: Component = () => {
     navigator.clipboard.writeText(code()).catch(console.error);
   };
 
+  const handleRenameSVG = (idx: number, e: any) => {
+    const name = e.target.textContent;
+    if (!name) {
+      e.target.innerHTML = appState.svgList[idx].name;
+      return;
+    }
+    updateAppState.renameSVG(idx, name);
+  };
+
+  const handleRenameSVGConfirm = (e: any) => {
+    if (e.which === 13) {
+      e.preventDefault();
+      e.target.blur();
+    }
+  };
+
   return (
     <div class={css.page} classList={{ [css.hasSVGs]: hasSVGs() }}>
       <main class={css.main}>
@@ -215,7 +231,17 @@ const App: Component = () => {
                   class={css.entry__image}
                   src={`data:image/svg+xml;utf8,${appState.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
                 />
-                <span class={css.entry__filename}>{i.name}.svg</span>
+                <span class={css.entry__filename}>
+                  <span
+                    class={css.entry__input}
+                    contentEditable
+                    onKeyPress={handleRenameSVGConfirm}
+                    onBlur={(e) => handleRenameSVG(idx(), e)}
+                  >
+                    {i.name}
+                  </span>
+                  .svg
+                </span>
                 <button class={css.entry__remove} onClick={() => updateAppState.removeSVG(idx())} />
               </div>
             )}
