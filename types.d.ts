@@ -7,9 +7,13 @@ interface SVGEntry {
 }
 
 interface AppState {
+  configVersion: number;
   prefix: string;
-  enableSVGO: boolean;
-  outputBackground: boolean;
+  size: string;
+  outputSize: boolean;
+  outputCurrentColor: boolean;
   outputWebkitPrefix: boolean;
+  enableSVGO: boolean;
+  shareStyles: boolean;
   svgList: SVGEntry[];
 }

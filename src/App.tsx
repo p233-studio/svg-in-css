@@ -28,10 +28,10 @@ const Toggle = (props: { isActive: boolean; onClick: () => void }) => (
 );
 
 const App: Component = () => {
-  const { appState, updateAppState } = store;
+  const { appState, appStateModifiers } = store;
 
   const [isModalOpen, setIsModalOpen] = createSignal(false);
-  let $modal: HTMLDivElement;
+  let $modal: HTMLDListElement;
   const handleModalOutsideClick = (e: any) => !$modal.contains(e.target) && setIsModalOpen(false);
   createEffect(() => {
     if (isModalOpen()) {
@@ -56,7 +56,7 @@ const App: Component = () => {
       reader.readAsText(i);
       reader.onload = (e: any) => {
         const name = i.name.replace(/\.svg$/, "");
-        updateAppState.addSVG({
+        appStateModifiers.addSVG({
           name,
           originalSVG: e.target.result,
           optimizedSVG: optimize(e.target.result, getSVGOConfig(name)).data
@@ -72,19 +72,23 @@ const App: Component = () => {
     reader.readAsText(e.target.files[0]);
     reader.onload = (e: any) => {
       const config = JSON.parse(e.target.result);
-      updateAppState.restoreConfig(config);
+      appStateModifiers.restoreConfig(config);
     };
   };
 
   const handleDownloadConfigJSON = () => {
     const content = JSON.stringify(
       {
+        configVersion: appState.configVersion,
         prefix: appState.prefix,
-        enableSVGO: appState.enableSVGO,
-        outputBackground: appState.outputBackground,
+        size: appState.size,
+        outputSize: appState.outputSize,
+        outputCurrentColor: appState.outputCurrentColor,
         outputWebkitPrefix: appState.outputWebkitPrefix,
+        enableSVGO: appState.enableSVGO,
+        shareStyles: appState.shareStyles,
         svgList: appState.svgList
-      },
+      }, // prevent random order
       null,
       2
     );
@@ -114,7 +118,7 @@ const App: Component = () => {
 
   const handleRemoveAll = () => {
     if (confirm("Will remove all SVGs. Are you sure to continue?")) {
-      updateAppState.removeAll();
+      appStateModifiers.removeAllSVGs();
     }
   };
 
@@ -128,7 +132,7 @@ const App: Component = () => {
       e.target.innerHTML = appState.svgList[idx].name;
       return;
     }
-    updateAppState.renameSVG(idx, name);
+    appStateModifiers.renameSVG(idx, name);
   };
 
   const handleRenameSVGConfirm = (e: any) => {
@@ -184,30 +188,38 @@ const App: Component = () => {
                 <input
                   type="text"
                   value={appState.prefix}
-                  onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
-                  class={css.prefixInput}
+                  onInput={(e: any) => appStateModifiers.updatePrefix(e.target.value)}
+                  class={css.input}
                 />
               </dd>
-              <dt>Enable SVGO</dt>
+              <dt>Icon Size</dt>
               <dd>
-                <Toggle
-                  isActive={appState.enableSVGO}
-                  onClick={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
+                <input
+                  type="text"
+                  value={appState.size}
+                  onInput={(e: any) => appStateModifiers.updateSize(e.target.value)}
+                  class={css.input}
                 />
+              </dd>
+              <dt>Output Size</dt>
+              <dd>
+                <Toggle isActive={appState.outputSize} onClick={appStateModifiers.toggleOutputSize} />
               </dd>
               <dt>Current Color</dt>
               <dd>
-                <Toggle
-                  isActive={appState.outputBackground}
-                  onClick={() => updateAppState.updateOutputBackground(!appState.outputBackground)}
-                />
+                <Toggle isActive={appState.outputCurrentColor} onClick={appStateModifiers.toggleOutputCurrentColor} />
+              </dd>
+              <dt>Share Styles</dt>
+              <dd>
+                <Toggle isActive={appState.shareStyles} onClick={appStateModifiers.toggleShareStyles} />
               </dd>
               <dt>Webkit Prefix</dt>
               <dd>
-                <Toggle
-                  isActive={appState.outputWebkitPrefix}
-                  onClick={() => updateAppState.updateOutputWebkitPrefix(!appState.outputWebkitPrefix)}
-                />
+                <Toggle isActive={appState.outputWebkitPrefix} onClick={appStateModifiers.toggleOutputWebkitPrefix} />
+              </dd>
+              <dt>Enable SVGO</dt>
+              <dd>
+                <Toggle isActive={appState.enableSVGO} onClick={appStateModifiers.toggleEnableSVGO} />
               </dd>
             </dl>
           </div>
@@ -221,7 +233,7 @@ const App: Component = () => {
             <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
             <span class={css.button}>Upload more SVGs</span>
           </label>
-          <button class={css.button} onClick={updateAppState.sortAlphabetically}>
+          <button class={css.button} onClick={appStateModifiers.sortAlphabetically}>
             Sort alphabetically
           </button>
           <button class={css.button} onClick={handleDownloadConfigJSON}>
@@ -251,7 +263,7 @@ const App: Component = () => {
                   .svg
                 </span>
                 <button class={css.sidebarEntry__download} onClick={() => handleDownloadSVG(idx())} />
-                <button class={css.sidebarEntry__remove} onClick={() => updateAppState.removeSVG(idx())} />
+                <button class={css.sidebarEntry__remove} onClick={() => appStateModifiers.removeSVG(idx())} />
               </div>
             )}
           </For>

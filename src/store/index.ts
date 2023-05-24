@@ -2,27 +2,50 @@ import { produce } from "solid-js/store";
 import createLocalStore from "./createLocalStore";
 
 const defaultState = {
+  configVersion: 1,
   prefix: "icon-",
+  size: "20px",
+  outputSize: true,
+  outputCurrentColor: true,
+  outputWebkitPrefix: true,
   enableSVGO: true,
-  outputBackground: true,
-  outputWebkitPrefix: false,
+  shareStyles: true,
   svgList: [] as SVGEntry[]
 };
 
 const [appState, setAppState] = createLocalStore<AppState>(defaultState);
 
-const updateAppState = {
+const appStateModifiers = {
   updatePrefix: (prefix: string) => {
     setAppState(produce((s) => (s.prefix = prefix)));
   },
-  updateEnableSVGO: (isEnable: boolean) => {
-    setAppState(produce((s) => (s.enableSVGO = isEnable)));
+  updateSize: (size: string) => {
+    setAppState(produce((s) => (s.size = size)));
   },
-  updateOutputBackground: (isEnable: boolean) => {
-    setAppState(produce((s) => (s.outputBackground = isEnable)));
+  toggleOutputSize: () => {
+    setAppState(
+      produce((s) => {
+        s.outputSize = !s.outputSize;
+        if (!s.outputSize && !s.outputCurrentColor) s.shareStyles = false;
+      })
+    );
   },
-  updateOutputWebkitPrefix: (isEnable: boolean) => {
-    setAppState(produce((s) => (s.outputWebkitPrefix = isEnable)));
+  toggleOutputCurrentColor: () => {
+    setAppState(
+      produce((s) => {
+        s.outputCurrentColor = !s.outputCurrentColor;
+        if (!s.outputSize && !s.outputCurrentColor) s.shareStyles = false;
+      })
+    );
+  },
+  toggleOutputWebkitPrefix: () => {
+    setAppState(produce((s) => (s.outputWebkitPrefix = !s.outputWebkitPrefix)));
+  },
+  toggleEnableSVGO: () => {
+    setAppState(produce((s) => (s.enableSVGO = !s.enableSVGO)));
+  },
+  toggleShareStyles: () => {
+    setAppState(produce((s) => (s.shareStyles = !s.shareStyles)));
   },
   addSVG: (entry: SVGEntry) => {
     setAppState(produce((s) => s.svgList.push(entry)));
@@ -33,21 +56,15 @@ const updateAppState = {
   renameSVG: (index: number, name: string) => {
     setAppState(produce((s) => (s.svgList[index].name = name)));
   },
-  removeAll: () => {
+  removeAllSVGs: () => {
     setAppState(produce((s) => (s.svgList = [])));
   },
   sortAlphabetically: () => {
     setAppState(produce((s) => (s.svgList = s.svgList.sort((a, b) => a.name.localeCompare(b.name)))));
   },
   restoreConfig: (config: AppState) => {
-    setAppState({
-      prefix: config.prefix,
-      enableSVGO: config.enableSVGO,
-      outputBackground: config.outputBackground,
-      outputWebkitPrefix: config.outputWebkitPrefix,
-      svgList: config.svgList
-    });
+    setAppState(config);
   }
 };
 
-export default { appState, updateAppState };
+export default { appState, appStateModifiers };
