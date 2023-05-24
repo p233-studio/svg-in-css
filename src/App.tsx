@@ -1,6 +1,5 @@
 import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "solid-js";
 import { optimize } from "svgo/dist/svgo.browser.js";
-import clsx from "clsx";
 import Prism from "prismjs";
 import store from "~/store";
 import generateCodeSnippet from "~/utils/generateCodeSnippet";
@@ -31,13 +30,13 @@ const Toggle = (props: { isActive: boolean; onClick: () => void }) => (
 const App: Component = () => {
   const { appState, updateAppState } = store;
 
-  const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
-  let $menu: HTMLDivElement;
-  const handleOutsideClick = (e: any) => !$menu.contains(e.target) && setIsDropdownOpen(false);
+  const [isModalOpen, setIsModalOpen] = createSignal(false);
+  let $modal: HTMLDivElement;
+  const handleModalOutsideClick = (e: any) => !$modal.contains(e.target) && setIsModalOpen(false);
   createEffect(() => {
-    if (isDropdownOpen()) {
-      document.addEventListener("mousedown", handleOutsideClick);
-      onCleanup(() => document.removeEventListener("mousedown", handleOutsideClick));
+    if (isModalOpen()) {
+      document.addEventListener("mousedown", handleModalOutsideClick);
+      onCleanup(() => document.removeEventListener("mousedown", handleModalOutsideClick));
     }
   });
 
@@ -146,77 +145,73 @@ const App: Component = () => {
           <div class={css.main__hgroup}>
             <h1>SVG in CSS</h1>
             <p>URL encoding SVGs</p>
-            <Show
-              when={hasSVGs()}
-              fallback={
-                <div class={css.main__buttonGroup}>
-                  <label class={css.button}>
-                    <input type="file" accept=".json" onChange={handleUploadConfigJSON} />
-                    <span>Upload config.json</span>
-                  </label>
-                  <label class={css.button}>
-                    <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
-                    <span>Upload SVGs</span>
-                  </label>
-                </div>
-              }
-            >
-              <div class={css.main__buttonGroup}>
-                <div class={css.settings}>
-                  <button
-                    class={clsx(css.button, css.settings__trigger)}
-                    classList={{ [css.show]: isDropdownOpen() }}
-                    onMouseDown={() => setIsDropdownOpen(true)}
-                  >
-                    Settings
-                  </button>
-                  <div
-                    class={css.settings__menu}
-                    classList={{ [css.show]: isDropdownOpen() }}
-                    ref={(el) => ($menu = el)}
-                  >
-                    <dl class={css.settings__options}>
-                      <dt>Prefix</dt>
-                      <dd>
-                        <input
-                          type="text"
-                          value={appState.prefix}
-                          onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
-                          class={css.prefixInput}
-                        />
-                      </dd>
-                      <dt>Enable SVGO</dt>
-                      <dd>
-                        <Toggle
-                          isActive={appState.enableSVGO}
-                          onClick={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
-                        />
-                      </dd>
-                      <dt>Inherit Color</dt>
-                      <dd>
-                        <Toggle
-                          isActive={appState.outputBackground}
-                          onClick={() => updateAppState.updateOutputBackground(!appState.outputBackground)}
-                        />
-                      </dd>
-                      <dt>Webkit Prefix</dt>
-                      <dd>
-                        <Toggle
-                          isActive={appState.outputWebkitPrefix}
-                          onClick={() => updateAppState.updateOutputWebkitPrefix(!appState.outputWebkitPrefix)}
-                        />
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-
-                <button class={clsx(css.button, css.copyButton)} onClick={handleCopyToClipboard}>
-                  Copy snippets
-                </button>
-              </div>
-              <pre class={css.code} innerHTML={codeHTML()} />
-            </Show>
           </div>
+
+          <Show
+            when={hasSVGs()}
+            fallback={
+              <div class={css.main__buttonGroup}>
+                <label class={css.button}>
+                  <input type="file" accept=".json" onChange={handleUploadConfigJSON} />
+                  <span>Upload config.json</span>
+                </label>
+                <label class={css.button}>
+                  <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
+                  <span>Upload SVGs</span>
+                </label>
+              </div>
+            }
+          >
+            <div class={css.main__buttonGroup}>
+              <button
+                class={[css.button, css.settingsButton].join(" ")}
+                classList={{ [css.show]: isModalOpen() }}
+                onMouseDown={() => setIsModalOpen(true)}
+              >
+                Settings
+              </button>
+              <button class={[css.button, css.copyButton].join(" ")} onClick={handleCopyToClipboard}>
+                Copy snippets
+              </button>
+            </div>
+            <pre class={css.code} innerHTML={codeHTML()} />
+          </Show>
+
+          <div class={css.settingsModal} classList={{ [css.show]: isModalOpen() }}>
+            <dl class={css.settingsModal__box} ref={(el) => ($modal = el)}>
+              <dt>Prefix</dt>
+              <dd>
+                <input
+                  type="text"
+                  value={appState.prefix}
+                  onInput={(e: any) => updateAppState.updatePrefix(e.target.value)}
+                  class={css.prefixInput}
+                />
+              </dd>
+              <dt>Enable SVGO</dt>
+              <dd>
+                <Toggle
+                  isActive={appState.enableSVGO}
+                  onClick={() => updateAppState.updateEnableSVGO(!appState.enableSVGO)}
+                />
+              </dd>
+              <dt>Current Color</dt>
+              <dd>
+                <Toggle
+                  isActive={appState.outputBackground}
+                  onClick={() => updateAppState.updateOutputBackground(!appState.outputBackground)}
+                />
+              </dd>
+              <dt>Webkit Prefix</dt>
+              <dd>
+                <Toggle
+                  isActive={appState.outputWebkitPrefix}
+                  onClick={() => updateAppState.updateOutputWebkitPrefix(!appState.outputWebkitPrefix)}
+                />
+              </dd>
+            </dl>
+          </div>
+
           <footer class={css.main__footer}>Version: {version}</footer>
         </div>
       </main>
@@ -239,14 +234,14 @@ const App: Component = () => {
         <div class={css.sidebar__svgList}>
           <For each={appState.svgList}>
             {(i, idx) => (
-              <div class={css.entry}>
+              <div class={css.sidebarEntry}>
                 <img
-                  class={css.entry__image}
+                  class={css.sidebarEntry__image}
                   src={`data:image/svg+xml;utf8,${appState.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
                 />
-                <span class={css.entry__filename}>
+                <span class={css.sidebarEntry__filename}>
                   <span
-                    class={css.entry__input}
+                    class={css.sidebarEntry__input}
                     contentEditable
                     onKeyPress={handleRenameSVGConfirm}
                     onBlur={(e) => handleRenameSVG(idx(), e)}
@@ -255,10 +250,8 @@ const App: Component = () => {
                   </span>
                   .svg
                 </span>
-                <button class={css.entry__download} onClick={() => handleDownloadSVG(idx())}>
-                  d
-                </button>
-                <button class={css.entry__remove} onClick={() => updateAppState.removeSVG(idx())} />
+                <button class={css.sidebarEntry__download} onClick={() => handleDownloadSVG(idx())} />
+                <button class={css.sidebarEntry__remove} onClick={() => updateAppState.removeSVG(idx())} />
               </div>
             )}
           </For>
