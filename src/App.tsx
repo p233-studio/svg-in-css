@@ -50,19 +50,32 @@ const App: Component = () => {
     return !!appState.svgList.length;
   });
 
+  const handleUpload = (file) => {
+    if (!/\.svg$/.test(file.name)) return;
+
+    const reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = (e: any) => {
+      const name = file.name.replace(/\.svg$/, "");
+      appStateModifiers.addSVG({
+        name,
+        originalSVG: e.target.result,
+        optimizedSVG: optimize(e.target.result, getSVGOConfig(name)).data
+      });
+    };
+  };
+
   const handleUploadSVGs = (e: any) => {
-    Array.from(e.target.files).forEach((i: any) => {
-      const reader = new FileReader();
-      reader.readAsText(i);
-      reader.onload = (e: any) => {
-        const name = i.name.replace(/\.svg$/, "");
-        appStateModifiers.addSVG({
-          name,
-          originalSVG: e.target.result,
-          optimizedSVG: optimize(e.target.result, getSVGOConfig(name)).data
-        });
-      };
-    });
+    Array.from(e.target.files).forEach(handleUpload);
+  };
+
+  const handleDropSVGs = (e: any) => {
+    e.preventDefault();
+    Array.from(e.dataTransfer.files).forEach(handleUpload);
+  };
+
+  const handleDragOver = (e: any) => {
+    e.preventDefault();
   };
 
   const handleUploadConfigJSON = (e: any) => {
@@ -143,7 +156,7 @@ const App: Component = () => {
   };
 
   return (
-    <div class={css.page} classList={{ [css.hasSVGs]: hasSVGs() }}>
+    <div class={css.page} classList={{ [css.hasSVGs]: hasSVGs() }} onDrop={handleDropSVGs} onDragOver={handleDragOver}>
       <main class={css.main}>
         <div class={css.main__container}>
           <div class={css.main__hgroup}>
