@@ -2,7 +2,7 @@ import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "so
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
-import generateCodeSnippet from "~/utils/generateCodeSnippet";
+import generateCode from "~/utils/generateCode";
 import css from "~/styles/styles.module.scss";
 import { version } from "../package.json";
 import type { Component } from "solid-js";
@@ -41,7 +41,7 @@ const App: Component = () => {
   });
 
   const code = createMemo(() => {
-    return generateCodeSnippet(appState);
+    return generateCode(appState);
   });
   const codeHTML = createMemo(() => {
     return Prism.highlight(code(), Prism.languages["css"], "css");
@@ -50,7 +50,7 @@ const App: Component = () => {
     return !!appState.svgList.length;
   });
 
-  const handleUpload = (file) => {
+  const handleUpload = (file: any) => {
     if (!/\.svg$/.test(file.name)) return;
 
     const reader = new FileReader();
@@ -92,16 +92,14 @@ const App: Component = () => {
   const handleDownloadConfigJSON = () => {
     const content = JSON.stringify(
       {
-        configVersion: appState.configVersion,
         prefix: appState.prefix,
         size: appState.size,
-        outputSize: appState.outputSize,
-        outputCurrentColor: appState.outputCurrentColor,
-        outputWebkitPrefix: appState.outputWebkitPrefix,
         enableSVGO: appState.enableSVGO,
-        shareStyles: appState.shareStyles,
-        svgList: appState.svgList
-      }, // prevent random order
+        enableWebkitPrefix: appState.enableWebkitPrefix,
+        enableBeforePseudo: appState.enableBeforePseudo,
+        svgList: appState.svgList,
+        configVersion: appState.configVersion
+      },
       null,
       2
     );
@@ -179,18 +177,9 @@ const App: Component = () => {
               </div>
             }
           >
-            <div class={css.main__buttonGroup}>
-              <button
-                class={[css.button, css.settingsButton].join(" ")}
-                classList={{ [css.show]: isModalOpen() }}
-                onMouseDown={() => setIsModalOpen(true)}
-              >
-                Settings
-              </button>
-              <button class={[css.button, css.copyButton].join(" ")} onClick={handleCopyToClipboard}>
-                Copy snippets
-              </button>
-            </div>
+            <button class={css.copyButton} onClick={handleCopyToClipboard}>
+              Copy
+            </button>
             <pre class={css.code} innerHTML={codeHTML()} />
           </Show>
 
@@ -203,6 +192,7 @@ const App: Component = () => {
                   value={appState.prefix}
                   onInput={(e: any) => appStateModifiers.updatePrefix(e.target.value)}
                   class={css.input}
+                  placeholder="icon"
                 />
               </dd>
               <dt>Icon Size</dt>
@@ -214,34 +204,33 @@ const App: Component = () => {
                   class={css.input}
                 />
               </dd>
-              <dt>Output Size</dt>
-              <dd>
-                <Toggle isActive={appState.outputSize} onClick={appStateModifiers.toggleOutputSize} />
-              </dd>
-              <dt>Current Color</dt>
-              <dd>
-                <Toggle isActive={appState.outputCurrentColor} onClick={appStateModifiers.toggleOutputCurrentColor} />
-              </dd>
-              <dt>Share Styles</dt>
-              <dd>
-                <Toggle isActive={appState.shareStyles} onClick={appStateModifiers.toggleShareStyles} />
-              </dd>
-              <dt>Webkit Prefix</dt>
-              <dd>
-                <Toggle isActive={appState.outputWebkitPrefix} onClick={appStateModifiers.toggleOutputWebkitPrefix} />
-              </dd>
               <dt>Enable SVGO</dt>
               <dd>
                 <Toggle isActive={appState.enableSVGO} onClick={appStateModifiers.toggleEnableSVGO} />
               </dd>
+              <dt>Webkit Prefix</dt>
+              <dd>
+                <Toggle isActive={appState.enableWebkitPrefix} onClick={appStateModifiers.toggleEnableWebkitPrefix} />
+              </dd>
+              <dt>Before Pseudo</dt>
+              <dd>
+                <Toggle isActive={appState.enableBeforePseudo} onClick={appStateModifiers.toggleEnableBeforePseudo} />
+              </dd>
             </dl>
           </div>
 
-          <footer class={css.main__footer}>Version: {version}</footer>
+          <footer class={css.main__footer}>
+            <span>Version: {version}</span>
+            <a href="https://github.com/P233/svg-in-css">GitHub</a>
+            <a href="https://peiwen.lu">Peiwen Lu</a>
+          </footer>
         </div>
       </main>
       <aside class={css.sidebar}>
         <div class={css.sidebar__buttonGroup}>
+          <button class={css.button} onMouseDown={() => setIsModalOpen(true)}>
+            Output Settings
+          </button>
           <label>
             <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
             <span class={css.button}>Upload more SVGs</span>
@@ -249,21 +238,18 @@ const App: Component = () => {
           <button class={css.button} onClick={appStateModifiers.sortAlphabetically}>
             Sort alphabetically
           </button>
-          <button class={css.button} onClick={handleDownloadConfigJSON}>
-            Download config.json
-          </button>
           <button class={css.button} onClick={handleRemoveAll}>
             Remove all SVGs
+          </button>
+          <button class={css.button} onClick={handleDownloadConfigJSON}>
+            Download config.json
           </button>
         </div>
         <div class={css.sidebar__svgList}>
           <For each={appState.svgList}>
             {(i, idx) => (
               <div class={css.sidebarEntry}>
-                <img
-                  class={css.sidebarEntry__image}
-                  src={`data:image/svg+xml;utf8,${appState.enableSVGO ? i.optimizedSVG : i.originalSVG}`}
-                />
+                <img class={css.sidebarEntry__image} src={`data:image/svg+xml;utf8,${i.optimizedSVG}`} />
                 <span class={css.sidebarEntry__filename}>
                   <span
                     class={css.sidebarEntry__input}

@@ -2,15 +2,13 @@ import { produce } from "solid-js/store";
 import createLocalStore from "./createLocalStore";
 
 const defaultState = {
-  configVersion: 1,
-  prefix: "icon-",
-  size: "20px",
-  outputSize: true,
-  outputCurrentColor: true,
-  outputWebkitPrefix: true,
+  prefix: "icon",
+  size: "24px",
   enableSVGO: true,
-  shareStyles: true,
-  svgList: [] as SVGEntry[]
+  enableWebkitPrefix: true,
+  enableBeforePseudo: false,
+  svgList: [] as SVGEntry[],
+  configVersion: 1
 };
 
 const [appState, setAppState] = createLocalStore<AppState>(defaultState);
@@ -22,30 +20,14 @@ const appStateModifiers = {
   updateSize: (size: string) => {
     setAppState(produce((s) => (s.size = size)));
   },
-  toggleOutputSize: () => {
-    setAppState(
-      produce((s) => {
-        s.outputSize = !s.outputSize;
-        if (!s.outputSize && !s.outputCurrentColor) s.shareStyles = false;
-      })
-    );
-  },
-  toggleOutputCurrentColor: () => {
-    setAppState(
-      produce((s) => {
-        s.outputCurrentColor = !s.outputCurrentColor;
-        if (!s.outputSize && !s.outputCurrentColor) s.shareStyles = false;
-      })
-    );
-  },
-  toggleOutputWebkitPrefix: () => {
-    setAppState(produce((s) => (s.outputWebkitPrefix = !s.outputWebkitPrefix)));
-  },
   toggleEnableSVGO: () => {
     setAppState(produce((s) => (s.enableSVGO = !s.enableSVGO)));
   },
-  toggleShareStyles: () => {
-    setAppState(produce((s) => (s.shareStyles = !s.shareStyles)));
+  toggleEnableWebkitPrefix: () => {
+    setAppState(produce((s) => (s.enableWebkitPrefix = !s.enableWebkitPrefix)));
+  },
+  toggleEnableBeforePseudo: () => {
+    setAppState(produce((s) => (s.enableBeforePseudo = !s.enableBeforePseudo)));
   },
   addSVG: (entry: SVGEntry) => {
     setAppState(produce((s) => s.svgList.push(entry)));
