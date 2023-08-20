@@ -246,11 +246,12 @@ const App: Component = () => {
           </button>
         </div>
         <div class={css.sidebar__svgList}>
+          <div class={css.sidebar__note}>Note: SVG previews are forced to be displayed in black color.</div>
           <For each={appState.svgList}>
             {(i, idx) => (
               <div class={css.sidebarEntry}>
-                <img class={css.sidebarEntry__image} src={`data:image/svg+xml;utf8,${i.optimizedSVG}`} />
-                <span class={css.sidebarEntry__filename}>
+                <div class={css.sidebarEntry__preview} innerHTML={i.optimizedSVG} />
+                <div class={css.sidebarEntry__filename}>
                   <span
                     class={css.sidebarEntry__input}
                     contentEditable
@@ -260,7 +261,7 @@ const App: Component = () => {
                     {i.name}
                   </span>
                   .svg
-                </span>
+                </div>
                 <button class={css.sidebarEntry__download} onClick={() => handleDownloadSVG(idx())} />
                 <button class={css.sidebarEntry__remove} onClick={() => appStateModifiers.removeSVG(idx())} />
               </div>
