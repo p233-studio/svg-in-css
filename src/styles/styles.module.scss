@@ -53,6 +53,13 @@ $sidebar-width: 301px;
     }
   }
 
+  &__buttonGroup {
+    display: grid;
+    flex: none;
+    grid-template-columns: repeat(2, max-content);
+    gap: 12px;
+  }
+
   &__footer {
     flex: none;
     padding-top: 32px;
