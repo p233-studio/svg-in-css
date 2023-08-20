@@ -159,7 +159,11 @@ const App: Component = () => {
         <div class={css.main__container}>
           <div class={css.main__hgroup}>
             <h1>SVG in CSS</h1>
-            <p>URL encoding SVGs</p>
+            <p>
+              URI encoding SVG icons in CSS. Inspried by{" "}
+              <a href="https://yoksel.github.io/url-encoder/">URL-encoder for SVG</a>. Refer to{" "}
+              <a href="https://peiwen.lu/post/svg-in-css">this article</a> for the backstory.
+            </p>
           </div>
 
           <Show
@@ -222,7 +226,6 @@ const App: Component = () => {
           <footer class={css.main__footer}>
             <span>Version: {version}</span>
             <a href="https://github.com/P233/svg-in-css">GitHub</a>
-            <a href="https://peiwen.lu">Peiwen Lu</a>
           </footer>
         </div>
       </main>
