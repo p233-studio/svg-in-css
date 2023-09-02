@@ -13,5 +13,6 @@ interface AppState {
   enableBeforePseudo: boolean;
   enableWebkitPrefix: boolean;
   svgList: SVGEntry[];
+  previewColor: string;
   configVersion: number;
 }

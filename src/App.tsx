@@ -78,6 +78,11 @@ const App: Component = () => {
     e.preventDefault();
   };
 
+  const handleUpdatePreviewColor = (e: any) => {
+    const color = e.target.value;
+    appStateModifiers.updatePreviewColor(color);
+  };
+
   const handleUploadConfigJSON = (e: any) => {
     if (!e.target.files.length) return;
 
@@ -98,6 +103,7 @@ const App: Component = () => {
         enableWebkitPrefix: appState.enableWebkitPrefix,
         enableBeforePseudo: appState.enableBeforePseudo,
         svgList: appState.svgList,
+        previewColor: appState.previewColor,
         configVersion: appState.configVersion
       },
       null,
@@ -248,20 +254,28 @@ const App: Component = () => {
             Download config.json
           </button>
         </div>
-        <div class={css.sidebar__svgList}>
-          <div class={css.sidebar__note}>Note: SVG previews are forced to be displayed in black color.</div>
+        <div class={css.svgList} style={{ color: appState.previewColor }}>
+          <label class={css.colorSetting}>
+            <span>SVG previews color:</span>
+            <input
+              class={css.colorSetting__input}
+              type="color"
+              value={appState.previewColor}
+              onInput={handleUpdatePreviewColor}
+            />
+          </label>
           <For each={appState.svgList}>
             {(i, idx) => (
-              <div class={css.sidebarEntry}>
+              <div class={css.svgEntry}>
                 <div
-                  class={css.sidebarEntry__preview}
+                  class={css.svgEntry__preview}
                   style={{
                     ["-webkit-mask-image"]: `url("${encodeSVG(appState.enableSVGO ? i.optimizedSVG : i.originalSVG)}")`
                   }}
                 />
-                <div class={css.sidebarEntry__filename}>
+                <div class={css.svgEntry__filename}>
                   <span
-                    class={css.sidebarEntry__input}
+                    class={css.svgEntry__input}
                     contentEditable
                     spellcheck={false}
                     onKeyPress={handleRenameSVGConfirm}
@@ -271,8 +285,8 @@ const App: Component = () => {
                   </span>
                   .svg
                 </div>
-                <button class={css.sidebarEntry__download} onClick={() => handleDownloadSVG(idx())} />
-                <button class={css.sidebarEntry__remove} onClick={() => appStateModifiers.removeSVG(idx())} />
+                <button class={css.svgEntry__download} onClick={() => handleDownloadSVG(idx())} />
+                <button class={css.svgEntry__remove} onClick={() => appStateModifiers.removeSVG(idx())} />
               </div>
             )}
           </For>

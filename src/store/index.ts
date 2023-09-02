@@ -8,6 +8,7 @@ const defaultState = {
   enableWebkitPrefix: true,
   enableBeforePseudo: false,
   svgList: [] as SVGEntry[],
+  previewColor: "#000",
   configVersion: 1
 };
 
@@ -43,6 +44,9 @@ const appStateModifiers = {
   },
   sortAlphabetically: () => {
     setAppState(produce((s) => (s.svgList = s.svgList.sort((a, b) => a.name.localeCompare(b.name)))));
+  },
+  updatePreviewColor: (color: string) => {
+    setAppState(produce((s) => (s.previewColor = color)));
   },
   restoreConfig: (config: AppState) => {
     setAppState(config);
