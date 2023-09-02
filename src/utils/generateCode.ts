@@ -21,30 +21,30 @@ export default function generateCode({
   svgList
 }: AppState) {
   const selectorPrefix = prefix || "icon";
-  const sharedStyles = `${
-    enableBeforePseudo
-      ? `.${selectorPrefix} {
+
+  const stylelintComment = enableWebkitPrefix ? "/* stylelint-disable property-no-vendor-prefix */\n\n" : "";
+
+  const shareProperties =
+    (size ? `\twidth: ${size};\n\theight: ${size};\n` : "") +
+    "\tbackground: currentcolor;\n" +
+    `\t${enableWebkitPrefix ? "-webkit-" : ""}mask-repeat: no-repeat;\n` +
+    `\t${enableWebkitPrefix ? "-webkit-" : ""}mask-position: center;`;
+
+  const shareStyles = enableBeforePseudo
+    ? `.${selectorPrefix} {
 \tdisplay: inline-flex; /* Modify as per your needs. */
 \talign-items: center;  /* Modify as per your needs. */
-}\n`
-      : ""
-  }
-.${selectorPrefix}${enableBeforePseudo ? "::before {" : " {"}
-${
-  enableBeforePseudo
-    ? `\tcontent: "";
-\tflex-shrink: 0;       /* Modify as per your needs. */
-\tmargin-right: 4px;    /* Modify as per your needs. */`
-    : `\tdisplay: block;       /* Modify as per your needs. */`
-}
-${size ? `\twidth: ${size};\n\theight: ${size};` : ""}
-\tbackground: currentcolor;
-\t${enableWebkitPrefix ? "-webkit-" : ""}mask-repeat: no-repeat;
-\t${enableWebkitPrefix ? "-webkit-" : ""}mask-position: center;
 }\n
-`
-    .replace(/^\n/, "")
-    .replace(/\n\n\t/g, "\n\t");
+.${selectorPrefix}::before {
+\tcontent: "";
+\tflex-shrink: 0;       /* Modify as per your needs. */
+\tmargin-right: 4px;    /* Modify as per your needs. */
+${shareProperties}
+}\n\n`
+    : `.${selectorPrefix} {
+\tdisplay: block;       /* Modify as per your needs. */
+${shareProperties}
+}\n\n`;
 
   const svgCodeList = svgList
     .map((i: SVGEntry) => {
@@ -56,5 +56,5 @@ ${size ? `\twidth: ${size};\n\theight: ${size};` : ""}
     })
     .join("\n\n");
 
-  return sharedStyles + svgCodeList;
+  return stylelintComment + shareStyles + svgCodeList;
 }
