@@ -2,7 +2,7 @@ import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "so
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
-import generateCode from "~/utils/generateCode";
+import generateCode, { encodeSVG } from "~/utils/generateCode";
 import css from "~/styles/styles.module.scss";
 import { version } from "../package.json";
 import type { Component } from "solid-js";
@@ -253,11 +253,17 @@ const App: Component = () => {
           <For each={appState.svgList}>
             {(i, idx) => (
               <div class={css.sidebarEntry}>
-                <div class={css.sidebarEntry__preview} innerHTML={i.optimizedSVG} />
+                <div
+                  class={css.sidebarEntry__preview}
+                  style={{
+                    ["-webkit-mask-image"]: `url("${encodeSVG(appState.enableSVGO ? i.optimizedSVG : i.originalSVG)}")`
+                  }}
+                />
                 <div class={css.sidebarEntry__filename}>
                   <span
                     class={css.sidebarEntry__input}
                     contentEditable
+                    spellcheck={false}
                     onKeyPress={handleRenameSVGConfirm}
                     onBlur={(e) => handleRenameSVG(idx(), e)}
                   >

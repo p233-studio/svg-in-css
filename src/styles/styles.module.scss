@@ -239,10 +239,9 @@ $sidebar-width: 301px;
     width: 24px;
     height: 24px;
     margin-right: 8px;
-
-    svg {
-      fill: currentcolor; // If it doesn't work for your SVGs, please let me know.
-    }
+    background: currentcolor;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
   }
 
   &__filename {

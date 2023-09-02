@@ -1,6 +1,6 @@
 // This function is directly borrowed from github.com/yoksel/url-encoder
 // https://github.com/yoksel/url-encoder/blob/master/src/js/script.js#LL133-L147C2
-function encodeSVG(data: string) {
+export function encodeSVG(data: string) {
   // Use single quotes instead of double to avoid encoding.
   data = data.replace(/"/g, `'`);
 
