@@ -1,4 +1,5 @@
 import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "solid-js";
+import Color from "color";
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
@@ -235,7 +236,7 @@ const App: Component = () => {
           </footer>
         </div>
       </main>
-      <aside class={css.sidebar}>
+      <aside class={css.sidebar} classList={{ [css.dark]: Color(appState.previewColor).isLight() }}>
         <div class={css.sidebar__buttonGroup}>
           <button class={css.button} onMouseDown={() => setIsModalOpen(true)}>
             Output Settings

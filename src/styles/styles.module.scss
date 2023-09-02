@@ -85,6 +85,29 @@ $sidebar-width: 301px;
   transition: transform 0.5s ease;
   transform: translateX($sidebar-width);
 
+  --sidebar-fg: #2a2a4a;
+  --entry-hover-bg: #fff;
+  --entry-button-fg: #1e1e35;
+  --entry-button-hover-fg: #35355e;
+
+  &.dark {
+    background: #1e1e35;
+    border-color: #575770;
+
+    --sidebar-fg: #eee;
+    --entry-hover-bg: #2a2a4a;
+    --entry-button-fg: #eee;
+    --entry-button-hover-fg: #fff;
+
+    ::selection {
+      background: #3f2d7c;
+    }
+
+    .button {
+      box-shadow: 0 0 0 1px #333351;
+    }
+  }
+
   &__buttonGroup {
     display: grid;
     flex: none;
@@ -228,11 +251,12 @@ $sidebar-width: 301px;
   padding: 0 16px 8px;
   font-size: 16px;
   line-height: 24px;
-  color: #2a2a4a;
+  color: var(--sidebar-fg);
+  white-space: nowrap;
   user-select: none;
 
   &__input {
-    width: 60px;
+    flex: 1;
     height: 24px;
     padding: 0;
     margin-left: 8px;
@@ -268,7 +292,7 @@ $sidebar-width: 301px;
     padding-right: 8px;
     font-size: 16px;
     line-height: 24px;
-    color: #2a2a4a;
+    color: var(--sidebar-fg);
   }
 
   &__input:focus {
@@ -281,7 +305,7 @@ $sidebar-width: 301px;
     height: 16px;
     padding: 0;
     margin-left: auto;
-    color: #35355e;
+    color: var(--entry-button-fg);
     background: currentcolor !important;
     opacity: 0;
     -webkit-mask-repeat: no-repeat;
@@ -289,7 +313,7 @@ $sidebar-width: 301px;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M480 224h-96V32H256v192h-96l160 160 160-160zm138.816 209.024c-6.72-7.168-51.552-55.136-64.352-67.648-8.48-8.288-20.608-13.376-33.344-13.376h-56.224l98.048 95.808H449.536c-3.264 0-6.208 1.664-7.68 4.256L415.744 512H224.256l-26.112-59.936c-1.472-2.592-4.448-4.256-7.68-4.256H77.056L175.072 352H118.88c-12.704 0-24.832 5.088-33.344 13.376-12.8 12.544-57.632 60.512-64.352 67.648-15.648 16.672-24.256 29.952-20.16 46.368l17.952 98.368c4.096 16.448 22.112 29.952 40.064 29.952h521.984c17.952 0 35.968-13.504 40.064-29.952l17.952-98.368c4.032-16.416-4.544-29.696-20.224-46.368z'/%3E%3C/svg%3E");
 
     &:hover {
-      color: #1e1e35;
+      color: var(--entry-button-hover-fg);
     }
   }
 
@@ -299,7 +323,7 @@ $sidebar-width: 301px;
     height: 20px;
     padding: 0;
     margin-left: 8px;
-    color: #35355e;
+    color: var(--entry-button-fg);
     background: currentcolor !important;
     opacity: 0;
     -webkit-mask-repeat: no-repeat;
@@ -307,12 +331,12 @@ $sidebar-width: 301px;
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 768 768'%3E%3Cpath d='M607.5 205.5 429 384l178.5 178.5-45 45L384 429 205.5 607.5l-45-45L339 384 160.5 205.5l45-45L384 339l178.5-178.5z'/%3E%3C/svg%3E");
 
     &:hover {
-      color: #1e1e35;
+      color: var(--entry-button-hover-fg);
     }
   }
 
   &:hover {
-    background: #fff;
+    background: var(--entry-hover-bg);
   }
 
   &:hover > &__download,
