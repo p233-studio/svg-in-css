@@ -1,5 +1,6 @@
 import { createSignal, createEffect, createMemo, onCleanup, Show, For } from "solid-js";
 import Color from "color";
+import toast, { Toaster } from "solid-toast";
 import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
@@ -141,7 +142,15 @@ const App: Component = () => {
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(code()).catch(console.error);
+    navigator.clipboard
+      .writeText(code())
+      .then(() => {
+        toast.success("Copied to clipboard");
+      })
+      .catch((e) => {
+        console.error(e);
+        toast.error("Failed to copy to clipboard");
+      });
   };
 
   const handleRenameSVG = (idx: number, e: any) => {
@@ -293,6 +302,7 @@ const App: Component = () => {
           </For>
         </div>
       </aside>
+      <Toaster position="top-center" />
     </div>
   );
 };
