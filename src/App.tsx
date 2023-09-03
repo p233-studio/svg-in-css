@@ -5,6 +5,7 @@ import { optimize } from "svgo/dist/svgo.browser.js";
 import Prism from "prismjs";
 import store from "~/store";
 import generateCode, { encodeSVG } from "~/utils/generateCode";
+import isValidConfig from "./utils/isValidConfig";
 import css from "~/styles/styles.module.scss";
 import { version } from "../package.json";
 import type { Component } from "solid-js";
@@ -85,14 +86,23 @@ const App: Component = () => {
     appStateModifiers.updatePreviewColor(color);
   };
 
-  const handleUploadConfigJSON = (e: any) => {
-    if (!e.target.files.length) return;
+  const handleUploadConfigJSON = (uploadEvent: any) => {
+    if (!uploadEvent.target.files.length) return;
 
     const reader = new FileReader();
-    reader.readAsText(e.target.files[0]);
-    reader.onload = (e: any) => {
-      const config = JSON.parse(e.target.result);
-      appStateModifiers.restoreConfig(config);
+    reader.readAsText(uploadEvent.target.files[0]);
+    reader.onload = (onloadEvent: any) => {
+      try {
+        const config = JSON.parse(onloadEvent.target.result);
+        if (isValidConfig(config)) {
+          appStateModifiers.restoreConfig(config);
+        } else {
+          throw Error("Invalid config.json");
+        }
+      } catch (err) {
+        uploadEvent.target.value = null; // reset config file input
+        toast.error(err.message);
+      }
     };
   };
 
@@ -147,8 +157,8 @@ const App: Component = () => {
       .then(() => {
         toast.success("Copied to clipboard");
       })
-      .catch((e) => {
-        console.error(e);
+      .catch((err) => {
+        console.error(err);
         toast.error("Failed to copy to clipboard");
       });
   };
@@ -188,7 +198,7 @@ const App: Component = () => {
               <div class={css.main__buttonGroup}>
                 <label class={css.button}>
                   <input type="file" accept=".json" onChange={handleUploadConfigJSON} />
-                  <span>Upload config.json</span>
+                  <span>Upload svg-in-css.config.json</span>
                 </label>
                 <label class={css.button}>
                   <input type="file" multiple={true} accept=".svg" onChange={handleUploadSVGs} />
