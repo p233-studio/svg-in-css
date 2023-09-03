@@ -167,9 +167,9 @@ const App: Component = () => {
           <div class={css.main__hgroup}>
             <h1>SVG in CSS</h1>
             <p>
-              URI encoding SVG icons in CSS. Inspried by{" "}
-              <a href="https://yoksel.github.io/url-encoder/">URL-encoder for SVG</a>. Refer to{" "}
-              <a href="https://peiwen.lu/post/svg-in-css">this article</a> for the backstory.
+              Utilizing URL encoding and CSS masking to embed SVG icons within CSS. Inspried by{" "}
+              <a href="https://yoksel.github.io/url-encoder/">URL-encoder for SVG</a>. Check out{" "}
+              <a href="https://peiwen.lu/post/svg-in-css">this post</a> for extra details.
             </p>
           </div>
 
